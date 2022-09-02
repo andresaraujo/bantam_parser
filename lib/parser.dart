@@ -1,110 +1,6 @@
 import 'token.dart';
 import 'scanner.dart';
 
-class Parser {
-  Parser(this.scanner);
-  final Scanner scanner;
-
-  late Token _current = Token(type: TokenType.eof, span: scanner.file.span(0));
-  late Token _previous;
-
-  Token get current => _current;
-  Token get previous => _previous;
-  set current(Token token) {
-    _previous = _current;
-    _current = token;
-  }
-
-  bool hadError = false;
-
-  final Map<TokenType, PrefixParselet> _prefixParselets = {};
-  final Map<TokenType, InfixParselet> _infixParselets = {};
-
-  void registerPrefix(TokenType type, PrefixParselet parselet) {
-    _prefixParselets[type] = parselet;
-  }
-
-  void registerInfix(TokenType type, InfixParselet parselet) {
-    _infixParselets[type] = parselet;
-  }
-
-
-  parse([int precedence = 0]) {
-    advance();
-    final prefix = _prefixParselets[_previous.type];
-
-    if (prefix == null) {
-      throw ParseException('No prefix parselet for ${_previous.type}');
-    }
-
-    var left = prefix.parse(this, _previous);
-
-    while (precedence < _getPrecedence()) {
-      advance();
-
-      final infix = _infixParselets[_previous.type];
-      if (infix == null) {
-        throw ParseException('No infix parselet for ${_previous.type}');
-      }
-      left = infix.parse(this, left, _previous);
-    }
-    return left;
-  }
-
-  int _getPrecedence() {
-    final infix = _infixParselets[_current.type];
-    if (infix != null) {
-      return infix.precedence;
-    }
-    return 0;
-  }
-
-  bool _match(List<TokenType> types) {
-    for (final type in types) {
-      if (_check(type)) {
-        advance();
-        return true;
-      }
-    }
-    return false;
-  }
-
-  void _consume(TokenType type, String errorMessage) {
-    if (_check(type)) {
-      advance();
-      return;
-    }
-    throw _error(_current, errorMessage);
-  }
-
-  bool _check(TokenType type) {
-    if (_isAtEnd()) {
-      return false;
-    }
-    return type == _current.type;
-  }
-
-  void advance() {
-    _previous = _current;
-    for (;;) {
-      _current = scanner.scanToken();
-      if (_current.type != TokenType.err) {
-        break;
-      }
-      _error(_current, current.span.text);
-    }
-  }
-
-  bool _isAtEnd() {
-    return _current.type == TokenType.eof;
-  }
-
-  ParseException _error(Token token, String message) {
-    hadError = true;
-    throw ParseException(message);
-  }
-}
-
 // <editor-fold desc="expressions">
 abstract class Expression {
   void print(StringBuffer sb);
@@ -272,7 +168,6 @@ class PostfixOperatorParselet implements InfixParselet {
 class PrefixOperatorParselet implements PrefixParselet {
   PrefixOperatorParselet(this.precedence);
 
-  @override
   final int precedence;
 
   @override
@@ -385,6 +280,110 @@ class AssignParselet implements InfixParselet {
   }
 }
 // </editor-fold>
+
+class Parser {
+  Parser(this.scanner);
+  final Scanner scanner;
+
+  late Token _current = Token(type: TokenType.eof, span: scanner.file.span(0));
+  late Token _previous;
+
+  Token get current => _current;
+  Token get previous => _previous;
+  set current(Token token) {
+    _previous = _current;
+    _current = token;
+  }
+
+  bool hadError = false;
+
+  final Map<TokenType, PrefixParselet> _prefixParselets = {};
+  final Map<TokenType, InfixParselet> _infixParselets = {};
+
+  void registerPrefix(TokenType type, PrefixParselet parselet) {
+    _prefixParselets[type] = parselet;
+  }
+
+  void registerInfix(TokenType type, InfixParselet parselet) {
+    _infixParselets[type] = parselet;
+  }
+
+
+  parse([int precedence = 0]) {
+    advance();
+    final prefix = _prefixParselets[_previous.type];
+
+    if (prefix == null) {
+      throw ParseException('No prefix parselet for ${_previous.type}');
+    }
+
+    var left = prefix.parse(this, _previous);
+
+    while (precedence < _getPrecedence()) {
+      advance();
+
+      final infix = _infixParselets[_previous.type];
+      if (infix == null) {
+        throw ParseException('No infix parselet for ${_previous.type}');
+      }
+      left = infix.parse(this, left, _previous);
+    }
+    return left;
+  }
+
+  int _getPrecedence() {
+    final infix = _infixParselets[_current.type];
+    if (infix != null) {
+      return infix.precedence;
+    }
+    return 0;
+  }
+
+  bool _match(List<TokenType> types) {
+    for (final type in types) {
+      if (_check(type)) {
+        advance();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void _consume(TokenType type, String errorMessage) {
+    if (_check(type)) {
+      advance();
+      return;
+    }
+    throw _error(_current, errorMessage);
+  }
+
+  bool _check(TokenType type) {
+    if (_isAtEnd()) {
+      return false;
+    }
+    return type == _current.type;
+  }
+
+  void advance() {
+    _previous = _current;
+    for (;;) {
+      _current = scanner.scanToken();
+      if (_current.type != TokenType.err) {
+        break;
+      }
+      _error(_current, current.span.text);
+    }
+  }
+
+  bool _isAtEnd() {
+    return _current.type == TokenType.eof;
+  }
+
+  ParseException _error(Token token, String message) {
+    hadError = true;
+    throw ParseException(message);
+  }
+}
 
 class BantamParser extends Parser {
   BantamParser(super.scanner) {
