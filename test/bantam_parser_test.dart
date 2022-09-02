@@ -1,5 +1,5 @@
-import 'package:pratt_parser/parser.dart';
-import 'package:pratt_parser/scanner.dart';
+import 'package:bantam_parser/parser.dart';
+import 'package:bantam_parser/scanner.dart';
 import 'package:test/test.dart';
 
 void main() {

@@ -1,15 +1,12 @@
-import 'dart:typed_data';
-
-import 'package:pratt_parser/parser.dart';
-import 'package:pratt_parser/scanner.dart';
+import 'package:bantam_parser/parser.dart';
+import 'package:bantam_parser/scanner.dart';
 
 void main(List<String> arguments) {
-  final source2 = '''
+  final source = '''
   # This is a comment
   4-3+2
   ''';
-  final source = '2 + 3 * 4';
-  final scanner = Scanner(source2);
+  final scanner = Scanner(source);
 
 
   final parser = BantamParser(scanner);

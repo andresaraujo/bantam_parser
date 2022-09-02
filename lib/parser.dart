@@ -1,4 +1,4 @@
-import 'package:pratt_parser/token.dart';
+import 'token.dart';
 import 'scanner.dart';
 
 class Parser {
@@ -94,10 +94,6 @@ class Parser {
       _error(_current, current.span.text);
     }
   }
-  //
-  // Token _previous() {
-  //   return tokens[_current - 1];
-  // }
 
   bool _isAtEnd() {
     return _current.type == TokenType.eof;
@@ -105,8 +101,6 @@ class Parser {
 
   ParseException _error(Token token, String message) {
     hadError = true;
-    // errorToken(token: token, message: message);
-    // return ParseError();
     throw ParseException(message);
   }
 }
