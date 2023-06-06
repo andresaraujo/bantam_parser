@@ -138,6 +138,7 @@ enum Precedence {
   unary(8), // -x !x
   postfix(9), // x++ x--
   call(10), // x(...)
+  something(10),
   primary(11); // x
 
   const Precedence(this.value);

@@ -6,7 +6,6 @@ import 'token.dart';
 
 // On demand scanner.
 class Scanner {
-
   /// The source code to be scanned.
   final String source;
 
@@ -29,58 +28,41 @@ class Scanner {
     _skipWhitespace();
 
     _start = _current;
-    if (_isAtEnd) return Token(type: TokenType.eof, span: _file.span(_file.length));
+    if (_isAtEnd) {
+      return Token(type: TokenType.eof, span: _file.span(_file.length));
+    }
 
     final char = _nextChar();
 
-    if (isAlpha(char)) return _identifier();
+    if (char.isAlphanumeric) return _identifier();
 
-    if (isDigit(char)) {
+    if (char.isDigit) {
       return _number(char);
     }
 
-    switch (char) {
-      case $openParen:
-        return _makeToken(TokenType.leftParen);
-      case $closeParen:
-        return _makeToken(TokenType.rightParen);
-      case $comma:
-        return _makeToken(TokenType.comma);
-      case $minus:
-        return _makeToken(TokenType.minus);
-      case $plus:
-        return _makeToken(TokenType.plus);
-      case $slash:
-        return _makeToken(TokenType.slash);
-      case $asterisk:
-        return _makeToken(TokenType.star);
-      case $tilde:
-        return _makeToken(TokenType.tilde);
-      case $equal:
-        return _makeToken(TokenType.equal);
-      case $exclamation:
-        return _makeToken(TokenType.bang);
-      case $question:
-        return _makeToken(TokenType.question);
-      case $colon:
-        return _makeToken(TokenType.colon);
-      case $caret:
-        return _makeToken(TokenType.caret);
-      case $lessThan:
-        return _makeToken(_match($equal) ? TokenType.lessThanEqual : TokenType.lessThan);
-      case $greaterThan:
-        return _makeToken(_match($equal) ? TokenType.greaterThanEqual : TokenType.greaterThan);
-      case $doubleQuote:
-        return _string();
-
-      case $space:
-      case $cr:
-      case $tab:
-      case $lf:
-      // ignore whitespace
-        break;
-    }
-    return _errorToken('Unexpected character.');
+    return switch (char) {
+      $openParen => _makeToken(TokenType.leftParen),
+      $closeParen => _makeToken(TokenType.rightParen),
+      $comma => _makeToken(TokenType.comma),
+      $minus => _makeToken(TokenType.minus),
+      $plus => _makeToken(TokenType.plus),
+      $slash => _makeToken(TokenType.slash),
+      $asterisk => _makeToken(TokenType.star),
+      $tilde => _makeToken(TokenType.tilde),
+      $equal => _makeToken(TokenType.equal),
+      $exclamation => _makeToken(TokenType.bang),
+      $question => _makeToken(TokenType.question),
+      $colon => _makeToken(TokenType.colon),
+      $caret => _makeToken(TokenType.caret),
+      $lessThan when _match($equal) => _makeToken(TokenType.lessThanEqual),
+      $lessThan => _makeToken(TokenType.lessThan),
+      $greaterThan when _match($equal) =>
+        _makeToken(TokenType.greaterThanEqual),
+      $greaterThan => _makeToken(TokenType.greaterThan),
+      $doubleQuote => _string(),
+      $space || $cr || $tab || $lf => _errorToken('Unexpected whitespace.'),
+      _ => _errorToken('Unexpected character.'),
+    };
   }
 
   Token _makeToken(TokenType type) {
@@ -91,9 +73,8 @@ class Scanner {
     return ErrorToken(span: _currentSpan, message: message);
   }
 
-
   void _skipWhitespace() {
-    for(;;) {
+    for (;;) {
       final char = _peek();
       switch (char) {
         case $space:
@@ -101,13 +82,11 @@ class Scanner {
         case $tab:
         case $lf:
           _advance();
-          break;
         // Comment
         case $hash:
-           while (!_isAtEnd && _peek() != $lf) {
-             _advance();
-           }
-          break;
+          while (!_isAtEnd && _peek() != $lf) {
+            _advance();
+          }
         default:
           return;
       }
@@ -115,7 +94,7 @@ class Scanner {
   }
 
   Token _identifier() {
-    while (isAlpha(_peek()) || isDigit(_peek())) {
+    while (_peek().isAlphanumeric || _peek().isDigit) {
       _advance();
     }
     return Token(type: TokenType.identifier, span: _currentSpan);
@@ -136,7 +115,7 @@ class Scanner {
   Token _number(int firstChar) {
     String consumeDigits() {
       final buffer = StringBuffer();
-      while (!_isAtEnd && isDigit(_peek())) {
+      while (!_isAtEnd && _peek().isDigit) {
         buffer.writeCharCode(_nextChar());
       }
       return buffer.toString();
@@ -191,19 +170,14 @@ class Scanner {
   SourceLocation get _currentLocation => _file.location(_current);
 }
 
-/// Returns true if [charCode] is a digit.
-bool isDigit(int charCode) {
-  return $0 <= charCode && charCode <= $9;
-}
-
-bool isAlpha(int charCode) {
-  return $a <= charCode && charCode <= $z || $A <= charCode && charCode <= $Z ||
-      charCode == $underscore;
-}
-
-/// Returns true if [charCode] is a valid identifier character.
-bool isName(int charCode) {
-  return $a <= charCode && charCode <= $z ||
-      $A <= charCode && charCode <= $Z ||
-      charCode == $underscore;
+extension on int {
+  bool get isDigit => $0 <= this && this <= $9;
+  bool get isAlphanumeric =>
+      $a <= this && this <= $z ||
+      $A <= this && this <= $Z ||
+      this == $underscore;
+  bool get isIdentifier =>
+      $a <= this && this <= $z ||
+      $A <= this && this <= $Z ||
+      this == $underscore;
 }
